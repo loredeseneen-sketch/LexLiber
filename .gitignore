@@ -1,0 +1,17 @@
+# Segreti / configurazione locale
+.env
+
+# Ambiente Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Dati locali (corpus indicizzato, Qdrant embedded, SQLite storico) —
+# rigenerabili da corpus/ingest.py, non vanno mai versionati (CLAUDE.md,
+# nessun dato utente deve lasciare/entrare nel repo pubblico/privato).
+data/
+corpus/raw/
+
+# macOS
+.DS_Store

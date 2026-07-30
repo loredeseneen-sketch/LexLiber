@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexLiber — Ricerca nel diritto italiano</title>
+<style>
+  :root {
+    --navy: #1a1a2e;
+    --green: #2d6a4f;
+    --green-hover: #40916c;
+    --box-bg: #f5f5f5;
+    --text-secondary: #6c757d;
+    --border: #dee2e6;
+    --ink: #1a1a2e;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- Header --- */
+  header {
+    background: var(--navy);
+    color: #ffffff;
+    padding: 1.5rem 1.5rem 1.1rem;
+    text-align: center;
+  }
+  header .logo {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0;
+  }
+  header .subtitle {
+    margin: 0.35rem 0 0;
+    font-size: 0.95rem;
+    color: #d8d8e6;
+  }
+
+  /* --- Main / ricerca --- */
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
+  }
+
+  /* --- Tab navigation --- */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.7rem 1.1rem;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--green); }
+  .tab-btn.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* --- Sezione "Analizza il mio documento" --- */
+  .doc-intro {
+    max-width: 640px;
+    margin: 0 auto 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  form#document-form {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .dropzone {
+    border: 1.5px dashed var(--green);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .dropzone:hover { background: var(--box-bg); }
+  .dropzone.has-file { border-style: solid; }
+  .dropzone .dz-label {
+    font-weight: 600;
+    color: var(--green);
+  }
+  .dropzone .dz-hint {
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  #doc-file { display: none; }
+  #doc-question {
+    font-family: inherit;
+    font-size: 1.05rem;
+    padding: 0.85rem 1.1rem;
+    border: 1.5px solid var(--green);
+    border-radius: 8px;
+    outline: none;
+    resize: vertical;
+    min-height: 4.5rem;
+  }
+  #doc-question:focus {
+    border-color: var(--green-hover);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+  }
+  #document-btn {
+    align-self: center;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75rem 1.8rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--green);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  #document-btn:hover { background: var(--green-hover); }
+  #document-btn:disabled { background: #a9c4b8; cursor: not-allowed; }
+
+  .doc-name-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.6rem;
+  }
+
+  form#search-form {
+    display: flex;
+    gap: 0.6rem;
+    width: 80%;
+    margin: 0 auto;
+  }
+  #query {
+    flex: 1;
+    font-family: inherit;
+    font-size: 1.05rem;
+    padding: 0.85rem 1.1rem;
+    border: 1.5px solid var(--green);
+    border-radius: 8px;
+    outline: none;
+    background: #fff;
+    color: var(--ink);
+  }
+  #query:focus {
+    border-color: var(--green-hover);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+  }
+  #search-btn {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0 1.6rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--green);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  #search-btn:hover { background: var(--green-hover); }
+  #search-btn:disabled { background: #a9c4b8; cursor: not-allowed; }
+
+  /* --- Chip suggerimenti --- */
+  .chips {
+    width: 80%;
+    margin: 0.9rem auto 0;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .chip {
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--green);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--green);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .chip:hover {
+    background: var(--green);
+    color: #fff;
+  }
+
+  /* --- Loading --- */
+  .loading-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 2.2rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  .loading-indicator.visible { display: flex; }
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    display: none;
+    margin-top: 1.5rem;
+    text-align: center;
+    color: #a94442;
+    font-size: 0.95rem;
+  }
+  .error-box.visible { display: block; }
+
+  /* --- Area risultati --- */
+  #result { margin-top: 2.2rem; }
+
+  .result-inner {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge.alta { background: #e6f4ea; color: #1e7e34; }
+  .badge.media { background: #fff8e1; color: #8a6d00; }
+  .badge.bassa { background: #fdece0; color: #a35b00; }
+
+  .answer {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+  .answer h1, .answer h2, .answer h3 {
+    font-family: inherit;
+    margin: 1.1em 0 0.4em;
+  }
+  .answer h1 { font-size: 1.4rem; }
+  .answer h2 { font-size: 1.25rem; }
+  .answer h3 { font-size: 1.12rem; }
+  .answer p { margin: 0 0 0.9em; }
+  .answer ul, .answer ol { margin: 0 0 0.9em; padding-left: 1.4em; }
+  .answer li { margin-bottom: 0.35em; }
+  .answer strong { font-weight: 700; }
+
+  .sources-box {
+    margin-top: 1.8rem;
+    background: var(--box-bg);
+    border-left: 4px solid var(--green);
+    border-radius: 0 6px 6px 0;
+    padding: 1.1rem 1.3rem;
+  }
+  .sources-box h2 {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin: 0 0 0.85rem;
+  }
+  .source-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .source-item:last-child { border-bottom: none; }
+  .source-item a {
+    color: var(--green);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .source-item a:hover { text-decoration: underline; color: var(--green-hover); }
+  .source-item .excerpt {
+    color: var(--text-secondary);
+  }
+
+  .timing-row {
+    text-align: right;
+    margin-top: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  /* --- Footer --- */
+  footer {
+    background: var(--navy);
+    color: #ffffff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  footer a {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 600px) {
+    header .logo { font-size: 1.6rem; }
+    form#search-form { flex-direction: column; width: 92%; }
+    .chips { width: 92%; }
+    #search-btn { padding: 0.8rem; }
+    footer { flex-direction: column; gap: 0.4rem; }
+    form#document-form { width: 92%; margin: 0 auto; }
+    .tabs { gap: 0.1rem; }
+    .tab-btn { padding: 0.7rem 0.6rem; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="logo">LexLiber</p>
+    <p class="subtitle">Ricerca nel diritto italiano</p>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="tab-search">Ricerca normativa</button>
+      <button type="button" class="tab-btn" data-tab="tab-document">Analizza il mio documento</button>
+    </div>
+
+    <section id="tab-search" class="tab-panel active">
+      <form id="search-form">
+        <input
+          type="text"
+          id="query"
+          placeholder="Es: quando è nullo un contratto? oppure art. 1418 cc"
+          autocomplete="off"
+          required
+        >
+        <button type="submit" id="search-btn">Cerca</button>
+      </form>
+
+      <div class="chips">
+        <button type="button" class="chip" data-query="nullità contratto">nullità contratto</button>
+        <button type="button" class="chip" data-query="responsabilità precontrattuale">responsabilità precontrattuale</button>
+        <button type="button" class="chip" data-query="art. 1418 cc">art. 1418 cc</button>
+      </div>
+
+      <div id="loading" class="loading-indicator">
+        <span class="spinner"></span>
+        <span>Ricerca in corso...</span>
+      </div>
+
+      <div id="error" class="error-box"></div>
+
+      <div id="result"></div>
+    </section>
+
+    <section id="tab-document" class="tab-panel">
+      <p class="doc-intro">
+        Carica un documento (PDF o DOCX) e fai una domanda su quel testo specifico:
+        il sistema risponde citando sia il documento caricato sia le norme del
+        corpus applicabili.
+      </p>
+
+      <form id="document-form">
+        <label class="dropzone" id="dropzone" for="doc-file">
+          <div class="dz-label" id="dz-label">Carica PDF o DOCX</div>
+          <div class="dz-hint">Trascina un file qui oppure clicca per selezionarlo</div>
+        </label>
+        <input type="file" id="doc-file" accept=".pdf,.docx" required>
+
+        <textarea
+          id="doc-question"
+          placeholder="Es: quali sono le clausole di recesso previste in questo contratto?"
+          required
+        ></textarea>
+
+        <button type="submit" id="document-btn">Analizza documento</button>
+      </form>
+
+      <div id="doc-loading" class="loading-indicator">
+        <span class="spinner"></span>
+        <span>Analisi del documento in corso...</span>
+      </div>
+
+      <div id="doc-error" class="error-box"></div>
+
+      <div id="doc-result"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>LexLiber &middot; open source &middot; self-hosted &middot; i tuoi dati non lasciano mai questo server</span>
+    <a href="#" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_BASE = window.LEXLIBER_API_BASE || "http://localhost:8000";
+
+  // --- Tab switching ---------------------------------------------------
+  document.querySelectorAll(".tab-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+      document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.remove("active"); });
+      btn.classList.add("active");
+      document.getElementById(btn.getAttribute("data-tab")).classList.add("active");
+    });
+  });
+
+  // --- Sezione "Ricerca normativa" --------------------------------------
+  const form = document.getElementById("search-form");
+  const queryEl = document.getElementById("query");
+  const searchBtn = document.getElementById("search-btn");
+  const loadingEl = document.getElementById("loading");
+  const errorEl = document.getElementById("error");
+  const resultEl = document.getElementById("result");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    runSearch(queryEl.value.trim());
+  });
+
+  document.querySelectorAll(".chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      const q = chip.getAttribute("data-query");
+      queryEl.value = q;
+      runSearch(q);
+    });
+  });
+
+  async function runSearch(query) {
+    if (!query) return;
+
+    setLoading(searchBtn, loadingEl, true);
+    clearError(errorEl);
+    resultEl.innerHTML = "";
+
+    const startedAt = performance.now();
+
+    try {
+      const resp = await fetch(API_BASE + "/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query }),
+      });
+
+      if (!resp.ok) {
+        const detail = await safeDetail(resp);
+        throw new Error(detail || ("Errore server (" + resp.status + ")"));
+      }
+
+      const data = await resp.json();
+      const clientSeconds = (performance.now() - startedAt) / 1000;
+      renderResult(resultEl, data, clientSeconds, {
+        fontiKey: "fonti",
+        sourcesTitle: "Fonti citate",
+      });
+    } catch (err) {
+      showError(errorEl, err.message);
+    } finally {
+      setLoading(searchBtn, loadingEl, false);
+    }
+  }
+
+  // --- Sezione "Analizza il mio documento" ------------------------------
+  const documentForm = document.getElementById("document-form");
+  const docFileEl = document.getElementById("doc-file");
+  const dropzoneEl = document.getElementById("dropzone");
+  const dzLabelEl = document.getElementById("dz-label");
+  const docQuestionEl = document.getElementById("doc-question");
+  const documentBtn = document.getElementById("document-btn");
+  const docLoadingEl = document.getElementById("doc-loading");
+  const docErrorEl = document.getElementById("doc-error");
+  const docResultEl = document.getElementById("doc-result");
+
+  docFileEl.addEventListener("change", function () {
+    const file = docFileEl.files[0];
+    if (file) {
+      dzLabelEl.textContent = file.name;
+      dropzoneEl.classList.add("has-file");
+    } else {
+      dzLabelEl.textContent = "Carica PDF o DOCX";
+      dropzoneEl.classList.remove("has-file");
+    }
+  });
+
+  documentForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    runDocumentAnalysis();
+  });
+
+  async function runDocumentAnalysis() {
+    const file = docFileEl.files[0];
+    const question = docQuestionEl.value.trim();
+    if (!file || !question) return;
+
+    setLoading(documentBtn, docLoadingEl, true);
+    clearError(docErrorEl);
+    docResultEl.innerHTML = "";
+
+    const startedAt = performance.now();
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("question", question);
+
+    try {
+      const resp = await fetch(API_BASE + "/analyze-document", {
+        method: "POST",
+        body: payload,
+      });
+
+      if (!resp.ok) {
+        const detail = await safeDetail(resp);
+        throw new Error(detail || ("Errore server (" + resp.status + ")"));
+      }
+
+      const data = await resp.json();
+      const clientSeconds = (performance.now() - startedAt) / 1000;
+      renderResult(docResultEl, data, clientSeconds, {
+        fontiKey: "fonti_normative",
+        sourcesTitle: "Fonti normative citate",
+        documentName: data.documento,
+      });
+    } catch (err) {
+      showError(docErrorEl, err.message);
+    } finally {
+      setLoading(documentBtn, docLoadingEl, false);
+    }
+  }
+
+  // --- Helpers condivisi --------------------------------------------------
+
+  function setLoading(button, loadingEl, loading) {
+    button.disabled = loading;
+    loadingEl.classList.toggle("visible", loading);
+  }
+
+  function showError(errorEl, message) {
+    errorEl.textContent = "Errore: " + message;
+    errorEl.classList.add("visible");
+  }
+
+  function clearError(errorEl) {
+    errorEl.classList.remove("visible");
+    errorEl.textContent = "";
+  }
+
+  async function safeDetail(resp) {
+    try {
+      const body = await resp.json();
+      return body.detail;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Renderizza una risposta (search o analyze-document) nel contenitore
+  // indicato. `opts.fontiKey` seleziona il campo fonti nella risposta
+  // (nomi diversi tra i due endpoint), `opts.documentName`, se presente,
+  // mostra il nome del file analizzato sopra il badge di confidence.
+  function renderResult(container, data, clientSeconds, opts) {
+    const confidence = data.confidence || "bassa";
+    const fonti = data[opts.fontiKey] || [];
+    const nFonti = fonti.length;
+
+    const wrap = document.createElement("div");
+    wrap.className = "result-inner";
+
+    if (opts.documentName) {
+      const docBadge = document.createElement("div");
+      docBadge.className = "doc-name-badge";
+      docBadge.textContent = "Documento analizzato: " + opts.documentName;
+      wrap.appendChild(docBadge);
+    }
+
+    // --- Badge confidence ---
+    const metaRow = document.createElement("div");
+    metaRow.className = "meta-row";
+
+    const badge = document.createElement("span");
+    if (confidence === "alta") {
+      badge.className = "badge alta";
+      badge.textContent = "● Fonti verificate: " + nFonti;
+    } else if (confidence === "media") {
+      badge.className = "badge media";
+      badge.textContent = "● Fonti parziali: " + nFonti;
+    } else {
+      badge.className = "badge bassa";
+      badge.textContent = "● Fonti insufficienti";
+    }
+    metaRow.appendChild(badge);
+    wrap.appendChild(metaRow);
+
+    // --- Testo della risposta ---
+    const answerEl = document.createElement("div");
+    answerEl.className = "answer";
+    answerEl.innerHTML = formatAnswer(data.risposta || "");
+    wrap.appendChild(answerEl);
+
+    // --- Box fonti citate ---
+    if (nFonti > 0) {
+      const box = document.createElement("div");
+      box.className = "sources-box";
+
+      const heading = document.createElement("h2");
+      heading.textContent = opts.sourcesTitle;
+      box.appendChild(heading);
+
+      fonti.forEach(function (f) {
+        box.appendChild(renderSource(f));
+      });
+
+      wrap.appendChild(box);
+    }
+
+    // --- Tempo di risposta ---
+    const timingRow = document.createElement("div");
+    timingRow.className = "timing-row";
+    const seconds = typeof data.tempo_ms === "number" ? data.tempo_ms / 1000 : clientSeconds;
+    timingRow.textContent = "Risposta in " + seconds.toFixed(1) + "s";
+    wrap.appendChild(timingRow);
+
+    container.appendChild(wrap);
+  }
+
+  function renderSource(f) {
+    const el = document.createElement("div");
+    el.className = "source-item";
+
+    const link = document.createElement("a");
+    link.href = f.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = f.label || f.excerpt || f.url;
+
+    el.appendChild(link);
+    el.appendChild(document.createTextNode(" — "));
+
+    const excerpt = document.createElement("span");
+    excerpt.className = "excerpt";
+    excerpt.textContent = f.excerpt || "";
+    el.appendChild(excerpt);
+
+    return el;
+  }
+
+  // Formattatore markdown-lite: la risposta del LLM usa titoli (#, ##),
+  // grassetto (**testo**) ed elenchi puntati/numerati. Nessuna libreria
+  // esterna: escaping HTML manuale seguito da poche regole minime.
+  function formatAnswer(raw) {
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    const lines = escaped.split(/\r?\n/);
+    let html = "";
+    let listOpen = null; // "ul" | "ol" | null
+    let paraLines = [];
+
+    function flushPara() {
+      if (paraLines.length) {
+        html += "<p>" + inline(paraLines.join(" ")) + "</p>";
+        paraLines = [];
+      }
+    }
+    function closeList() {
+      if (listOpen) {
+        html += "</" + listOpen + ">";
+        listOpen = null;
+      }
+    }
+    function inline(text) {
+      return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    }
+
+    lines.forEach(function (line) {
+      const trimmed = line.trim();
+      const heading = trimmed.match(/^(#{1,3})\s+(.*)$/);
+      const bullet = trimmed.match(/^[-*]\s+(.*)$/);
+      const numbered = trimmed.match(/^\d+\.\s+(.*)$/);
+
+      if (!trimmed) {
+        flushPara();
+        closeList();
+        return;
+      }
+      if (heading) {
+        flushPara();
+        closeList();
+        const level = heading[1].length;
+        html += "<h" + level + ">" + inline(heading[2]) + "</h" + level + ">";
+        return;
+      }
+      if (bullet) {
+        flushPara();
+        if (listOpen !== "ul") { closeList(); html += "<ul>"; listOpen = "ul"; }
+        html += "<li>" + inline(bullet[1]) + "</li>";
+        return;
+      }
+      if (numbered) {
+        flushPara();
+        if (listOpen !== "ol") { closeList(); html += "<ol>"; listOpen = "ol"; }
+        html += "<li>" + inline(numbered[1]) + "</li>";
+        return;
+      }
+      closeList();
+      paraLines.push(trimmed);
+    });
+    flushPara();
+    closeList();
+    return html;
+  }
+})();
+</script>
+</body>
+</html>

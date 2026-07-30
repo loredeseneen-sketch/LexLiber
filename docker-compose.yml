@@ -1,0 +1,52 @@
+# Tutti i servizi pubblicano le porte solo su 127.0.0.1: nessuna porta è
+# raggiungibile dall'esterno della macchina/server dello studio (principio
+# SOVEREIGN, vedi CLAUDE.md). Per esporre volutamente all'esterno servirebbe
+# un reverse proxy con autenticazione, fuori dallo scope di questo progetto.
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: lexliber-qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/localhost/6333'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lexliber-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Intero progetto montato per l'hot reload: le modifiche al codice
+      # (corpus/, search/, chat/, api/, config.py) si riflettono subito
+      # senza dover ricostruire l'immagine.
+      - .:/app
+    command: uvicorn api.routes:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: lexliber-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      - api
